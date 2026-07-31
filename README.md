@@ -10,6 +10,7 @@ Production-minded team task board (NestJS + Prisma + Supabase Postgres + React f
 | ORM | Prisma |
 | Database | PostgreSQL (Supabase) |
 | Auth | JWT + bcrypt (app-level, not Supabase Auth) |
+| API docs | Swagger / OpenAPI |
 | Frontend | TBD (React / Next.js) |
 
 ## Repository layout
@@ -17,6 +18,7 @@ Production-minded team task board (NestJS + Prisma + Supabase Postgres + React f
 ```
 task-board/
 ├── backend/          # NestJS API
+│   └── prisma/       # Schema & migrations
 ├── docs/             # Design notes
 │   └── db-design.md  # ER diagram & access rules
 ├── task.md           # Functional requirements
@@ -27,8 +29,10 @@ task-board/
 
 - [x] Requirements (`task.md`)
 - [x] Database design (`docs/db-design.md`)
-- [ ] NestJS backend scaffold
-- [ ] Prisma schema & migrations
+- [x] NestJS backend scaffold (`backend/`)
+- [x] Prisma schema (`backend/prisma/schema.prisma`)
+- [ ] Prisma migrate against Supabase
+- [ ] Swagger API docs
 - [ ] Auth, projects, tasks APIs
 - [ ] Frontend
 - [ ] Tests & seed data
@@ -38,6 +42,42 @@ task-board/
 - [Functional requirements](./task.md)
 - [Database design](./docs/db-design.md)
 
-## Setup
+## Backend setup
 
-Coming next after the backend scaffold and Prisma schema are in place.
+```bash
+cd backend
+npm install
+```
+
+### Configure Supabase
+
+1. Ensure `backend/.env` has your Supabase `DATABASE_URL` (Project Settings → Database → URI).
+2. Use **Session mode** (port `5432`) for migrations.
+
+### Generate client & create migration
+
+```bash
+cd backend
+npx prisma generate
+npx prisma migrate dev --name init
+```
+
+This creates `prisma/migrations/...` and applies tables to Supabase.
+
+### Run API
+
+```bash
+npm run start:dev
+```
+
+API default: `http://localhost:3000`
+
+## Database models
+
+| Model | Purpose |
+|-------|---------|
+| `User` | Auth user with `ADMIN` / `MEMBER` role |
+| `Project` | Board owned by a user |
+| `ProjectMember` | Who can access a project |
+| `Task` | Task with status, priority, assignee |
+| `TaskStatusHistory` | Audit log for status changes (bonus) |

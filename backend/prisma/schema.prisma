@@ -1,0 +1,116 @@
+// Prisma schema for Task Board (Supabase PostgreSQL)
+// Matches docs/db-design.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(MEMBER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ownedProjects     Project[]           @relation("ProjectOwner")
+  memberships       ProjectMember[]
+  createdTasks      Task[]              @relation("TaskCreator")
+  assignedTasks     Task[]              @relation("TaskAssignee")
+  taskStatusChanges TaskStatusHistory[]
+
+  @@map("users")
+}
+
+model Project {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  ownerId     String   @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner   User            @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members ProjectMember[]
+  tasks   Task[]
+
+  @@index([ownerId])
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @db.Uuid
+  userId    String   @db.Uuid
+  joinedAt  DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+model Task {
+  id          String       @id @default(uuid()) @db.Uuid
+  projectId   String       @db.Uuid
+  title       String
+  description String?
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?
+  creatorId   String       @db.Uuid
+  assigneeId  String?      @db.Uuid
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  project       Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator       User                @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Restrict)
+  assignee      User?               @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  statusHistory TaskStatusHistory[]
+
+  @@index([projectId, status])
+  @@index([projectId, priority])
+  @@index([projectId, assigneeId])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+model TaskStatusHistory {
+  id          String      @id @default(uuid()) @db.Uuid
+  taskId      String      @db.Uuid
+  fromStatus  TaskStatus?
+  toStatus    TaskStatus
+  changedById String      @db.Uuid
+  changedAt   DateTime    @default(now())
+
+  task      Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  changedBy User @relation(fields: [changedById], references: [id], onDelete: Restrict)
+
+  @@index([taskId])
+  @@map("task_status_history")
+}
