@@ -6,25 +6,14 @@ Production-minded team task board (NestJS + Prisma + Supabase + React).
 
 | Layer | Choice |
 |-------|--------|
-| Backend | NestJS |
+| Backend | NestJS (Vercel serverless) |
 | ORM | Prisma |
-| Database | PostgreSQL (Supabase) or Docker Postgres |
-| Auth | JWT + bcrypt |
+| Database | PostgreSQL (Supabase) |
+| Auth | JWT + bcryptjs |
 | API docs | Swagger at `/docs` |
-| Frontend | React (Vite) + React Router |
+| Frontend | React (Vite) on Vercel |
 
-## Progress
-
-- [x] Requirements & DB design
-- [x] NestJS API (auth, projects, tasks)
-- [x] Swagger + request logging
-- [x] Pagination, sorting, search, audit log
-- [x] Docker Compose + seed users + tests
-- [x] React frontend (login, register, projects, task board)
-- [ ] Real-time updates
-- [ ] Public deployment
-
-## Quick start
+## Quick start (local)
 
 ### Backend
 
@@ -37,8 +26,6 @@ npm run prisma:seed
 npm run start:dev
 ```
 
-API: http://localhost:3000/api · Swagger: http://localhost:3000/docs
-
 ### Frontend
 
 ```bash
@@ -47,10 +34,6 @@ npm install
 npm run dev
 ```
 
-App: http://localhost:5173
-
-Copy `frontend/.env.example` → `.env` if needed (`VITE_API_URL=http://localhost:3000/api`).
-
 ## Seed credentials
 
 | Role | Email | Password |
@@ -58,15 +41,43 @@ Copy `frontend/.env.example` → `.env` if needed (`VITE_API_URL=http://localhos
 | Admin | `admin@taskboard.local` | `Admin123!` |
 | Member | `member@taskboard.local` | `Member123!` |
 
-## Frontend features
+## Deploy backend on Vercel
 
-- Login & registration with client-side validation
-- Project list (search, create)
-- Project detail: members (owner/admin), edit/delete
-- Kanban task board (To Do / In Progress / Done)
-- Task create/edit with filters (status, priority, assignee, search)
-- Loading, empty, success, and error states
-- Responsive layout
+### Option A (recommended): Root Directory = `backend`
+
+1. Vercel → New Project → this repo  
+2. **Root Directory:** `backend`  
+3. Framework: Other  
+4. Build Command: `npm run vercel-build`  
+5. Install Command: `npm install`  
+6. Environment variables:
+
+| Name | Value |
+|------|--------|
+| `DATABASE_URL` | Supabase **Transaction** pooler URI (port `6543`) + `?pgbouncer=true` |
+| `JWT_SECRET` | long random string |
+| `JWT_EXPIRES_IN` | `7d` |
+| `FRONTEND_URL` | your frontend origin, e.g. `https://your-app.vercel.app` |
+
+7. Deploy. Test: `https://<api>.vercel.app/api/health`
+
+`vercel-build` runs Prisma generate, Nest build, then copies `dist` → `api/dist` so the serverless function can load the app.
+
+### Option B: deploy from repo root
+
+Use the root `vercel.json` (build runs inside `backend/`). Same env vars as above.
+
+### After backend is live
+
+Set frontend `VITE_API_URL=https://<api>.vercel.app/api` and redeploy the frontend.
+
+Run migrations against Supabase from your machine (not on Vercel):
+
+```bash
+cd backend
+npx prisma migrate deploy
+npm run prisma:seed
+```
 
 ## Docs
 

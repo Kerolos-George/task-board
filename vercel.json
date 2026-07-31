@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "installCommand": "cd backend && npm install",
+  "buildCommand": "cd backend && npm run vercel-build",
+  "builds": [
+    {
+      "src": "backend/api/index.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "backend/api/dist/**",
+          "backend/prisma/**",
+          "backend/node_modules/.prisma/**",
+          "backend/node_modules/@prisma/client/**"
+        ]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "backend/api/index.js"
+    }
+  ]
+}
