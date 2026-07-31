@@ -26,7 +26,8 @@ npm run prisma:seed
 npm run start:dev
 ```
 
-API: http://localhost:3000/api
+API: http://localhost:3000/api  
+Swagger: http://localhost:3000/docs
 
 ### Frontend
 
@@ -47,40 +48,58 @@ App: http://localhost:5173
 
 ## Deploy to Vercel
 
-### Backend (recommended: set Root Directory to `backend`)
+### Deploy Backend
 
-1. **Vercel → Import Project** → this repo  
-2. **Framework Preset:** Other  
-3. **Root Directory:** `backend` ← **Important**  
-4. **Build Command:** `npm run vercel-build`  
-5. **Output Directory:** (leave empty)  
-6. **Install Command:** `npm install`  
+1. **Create new Vercel project** → Import from Git → this repo
+2. **Project Settings:**
+   - **Name:** `task-board-api` (or any name)
+   - **Framework:** Other
+   - **Root Directory:** `backend` ← **Important**
+   - **Build Command:** `npm run vercel-build`
+   - **Output Directory:** (leave empty)
+   - **Install Command:** `npm install`
 
-**Environment Variables:**
+3. **Environment Variables:**
 
 | Variable | Value |
 |----------|-------|
-| `DATABASE_URL` | Your Supabase Transaction pooler (port `6543`)<br>Example: `postgresql://user:pass@host.supabase.com:6543/postgres?pgbouncer=true` |
-| `JWT_SECRET` | Long random string (generate with `openssl rand -base64 32`) |
+| `DATABASE_URL` | Supabase Transaction pooler (port `6543`)<br>`postgresql://user:pass@host.supabase.com:6543/postgres?pgbouncer=true` |
+| `JWT_SECRET` | Generate: `openssl rand -base64 32` |
 | `JWT_EXPIRES_IN` | `7d` |
-| `FRONTEND_URL` | Your frontend URL, e.g. `https://task-board-frontend.vercel.app` |
+| `FRONTEND_URL` | Your frontend URL (set after frontend deploy)<br>Example: `https://task-board-app.vercel.app` |
 
-7. **Deploy**
+4. **Deploy**
 
-Test: `https://your-api.vercel.app/api/health`
+After deploy:
+- API: `https://your-api.vercel.app/api/health`
+- Swagger: `https://your-api.vercel.app/docs`
 
-### Alternative: Deploy from root
+### Deploy Frontend (separate project)
 
-If you can't set Root Directory, the root `vercel.json` will deploy from the monorepo root, but **setting Root Directory to `backend` is simpler and recommended**.
+1. **Create another Vercel project** → same repo
+2. **Project Settings:**
+   - **Name:** `task-board-app` (or any name)
+   - **Framework:** Vite
+   - **Root Directory:** `frontend` ← **Important**
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+   - **Install Command:** `npm install`
 
-### Frontend
+3. **Environment Variables:**
 
-1. Deploy `frontend` folder separately (or set Root Directory to `frontend`)  
-2. Set `VITE_API_URL=https://your-api.vercel.app/api`  
+| Variable | Value |
+|----------|-------|
+| `VITE_API_URL` | Your backend API URL<br>Example: `https://task-board-api.vercel.app/api` |
+
+4. **Deploy**
+
+### Update backend FRONTEND_URL
+
+After frontend deploys, go back to backend project → Settings → Environment Variables → Update `FRONTEND_URL` with your frontend URL → Redeploy
 
 ### Database migrations
 
-Run migrations from your local machine (not on Vercel):
+Run from your local machine (not on Vercel):
 
 ```bash
 cd backend
@@ -91,12 +110,12 @@ npm run prisma:seed
 ## Features
 
 - JWT authentication (Admin/Member roles)
-- Project CRUD with member management (owner/admin only)
+- Project CRUD with member management
 - Kanban task board (To Do / In Progress / Done)
 - Task filters: status, priority, assignee, search
 - Pagination, sorting
-- Task status audit log (bonus)
-- Swagger API docs at `/docs`
+- Task status audit log
+- Swagger API docs
 
 ## Docs
 
