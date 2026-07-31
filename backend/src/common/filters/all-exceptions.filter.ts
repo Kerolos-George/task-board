@@ -31,8 +31,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = (obj.message as string | string[]) ?? message;
         error = (obj.error as string) ?? error;
       }
+      this.logger.warn(
+        `${request.method} ${request.url} ${status} — ${Array.isArray(message) ? message.join(', ') : message}`,
+      );
     } else if (exception instanceof Error) {
-      this.logger.error(exception.message, exception.stack);
+      this.logger.error(
+        `${request.method} ${request.url} ${status} — ${exception.message}`,
+        exception.stack,
+      );
       message = exception.message;
     }
 
