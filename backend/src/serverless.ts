@@ -1,34 +1,29 @@
 import { NestFactory } from '@nestjs/core';
-import { ExpressAdapter } from '@nestjs/platform-express';
-import type { Express, Request, Response } from 'express';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import type { Request, Response } from 'express';
 import { AppModule } from './app.module';
 import { configureApp } from './configure-app';
 
-// Use require for express to ensure CommonJS compatibility
-const express = require('express');
+let cachedApp: NestExpressApplication | undefined;
 
-let cachedServer: Express | undefined;
-
-async function bootstrapServer(): Promise<Express> {
-  if (cachedServer) {
-    return cachedServer;
+async function bootstrapServer(): Promise<NestExpressApplication> {
+  if (cachedApp) {
+    return cachedApp;
   }
 
-  const expressApp = express();
-  const adapter = new ExpressAdapter(expressApp);
-  
-  const app = await NestFactory.create(AppModule, adapter, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
   });
 
   configureApp(app);
   await app.init();
 
-  cachedServer = expressApp;
-  return expressApp;
+  cachedApp = app;
+  return app;
 }
 
 export default async function handler(req: Request, res: Response) {
-  const server = await bootstrapServer();
+  const app = await bootstrapServer();
+  const server = app.getHttpAdapter().getInstance();
   return server(req, res);
 }
