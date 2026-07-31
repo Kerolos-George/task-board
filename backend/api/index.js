@@ -1,23 +1,16 @@
+// Vercel serverless entry for NestJS
+// The dist folder is copied here by npm run vercel-build
+
 const path = require('path');
 const fs = require('fs');
 
-// Nest output is copied next to this file by `npm run vercel-build`
-const candidates = [
-  path.join(__dirname, 'dist', 'serverless.js'),
-  path.join(__dirname, '..', 'dist', 'serverless.js'),
-];
+const distPath = path.join(__dirname, 'dist', 'serverless.js');
 
-const serverlessPath = candidates.find((p) => fs.existsSync(p));
-
-if (!serverlessPath) {
-  console.error(
-    'Nest serverless bundle not found. Looked in:\n' +
-      candidates.map((p) => ` - ${p}`).join('\n') +
-      '\nRun: npm run vercel-build',
-  );
-  throw new Error('Cannot find Nest serverless handler (api/dist/serverless.js)');
+if (!fs.existsSync(distPath)) {
+  const files = fs.readdirSync(__dirname, { recursive: true });
+  console.error('Files in api/:', files);
+  throw new Error(`Nest bundle not found at: ${distPath}`);
 }
 
-const handler = require(serverlessPath).default;
-
+const handler = require('./dist/serverless').default;
 module.exports = handler;

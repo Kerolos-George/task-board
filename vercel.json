@@ -1,25 +1,16 @@
 {
-  "version": 2,
-  "installCommand": "cd backend && npm install",
-  "buildCommand": "cd backend && npm run vercel-build",
-  "builds": [
-    {
-      "src": "backend/api/index.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "backend/api/dist/**",
-          "backend/prisma/**",
-          "backend/node_modules/.prisma/**",
-          "backend/node_modules/@prisma/client/**"
-        ]
-      }
+  "buildCommand": "cd backend && npm install && npm run vercel-build",
+  "outputDirectory": "backend/api",
+  "functions": {
+    "backend/api/index.js": {
+      "runtime": "nodejs20.x",
+      "includeFiles": "backend/{api/dist/**,node_modules/**,prisma/**}"
     }
-  ],
-  "routes": [
+  },
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "backend/api/index.js"
+      "source": "/(.*)",
+      "destination": "/backend/api/index.js"
     }
   ]
 }
